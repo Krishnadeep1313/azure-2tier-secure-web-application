@@ -6,8 +6,6 @@
 
 **Author:** Krishnadeep Chudasama · **Estimated Time:** 60 minutes · **Difficulty:** Beginner
 
-> Lab design based on a guide by Jhante Charles. Build, documentation and architecture diagram by Krishnadeep Chudasama.
-
 🎥 **WATCH ME COMPLETE THIS LAB HERE:**
 
 *Video walkthrough coming soon.*
