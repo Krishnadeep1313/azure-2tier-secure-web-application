@@ -6,7 +6,7 @@
 
 🎥 WATCH ME COMPLETE THIS LAB HERE:
 
-[https://www.loom.com/share/fe98ab1cce7b4f989a8f35076f2d05b2](https://www.loom.com/share/fe98ab1cce7b4f989a8f35076f2d05b2)
+
 
 ## 📋 Table of Contents
 - [Objective](#-objective)
@@ -52,7 +52,6 @@ graph TD
 
 ## ✅ Prerequisites
 - [x] Active Azure Subscription
-- [x] Completed Week 2 Video Modules
 - [x] Terminal installed
 
 ## ⚙️ Lab Variables (Naming Convention)
