@@ -34,7 +34,7 @@ In this lab, you will build a classic "IaaS" architecture. You will create a Vir
 
 ## 🏗️ Architecture Diagram
 
-![Lab 02 architecture: internet to vm-web-01 in the public subnet, vm-db-01 in the private subnet with no public IP, NSGs on each VM](images/lab02-architecture.png)
+![Lab 02 architecture: internet to vm-web-01 in the public subnet, vm-db-01 in the private subnet with no public IP, NSGs on each VM](lab-02-architecture.png)
 
 **How to read it:** The internet reaches only `vm-web-01` (HTTP and SSH). `vm-db-01` has no public IP and is reachable only from the web subnet (`10.0.1.0/24`), so administrators "jump" through the web server to get to it.
 
