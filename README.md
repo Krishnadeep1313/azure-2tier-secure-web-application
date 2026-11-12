@@ -8,7 +8,7 @@
 
 🎥 **WATCH ME COMPLETE THIS LAB HERE:**
 
-*Video walkthrough coming soon.*
+https://www.loom.com/share/f203140d3a6e402480250c1dad1c6f02
 
 <!-- TODO: replace the line above with the Loom link once the video is recorded -->
 
