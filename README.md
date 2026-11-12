@@ -4,9 +4,15 @@
 ![Virtual Network](https://img.shields.io/badge/Virtual_Network-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-%23E95420.svg?style=for-the-badge&logo=ubuntu&logoColor=white)
 
-🎥 WATCH ME COMPLETE THIS LAB HERE:
+**Author:** Krishnadeep Chudasama · **Estimated Time:** 60 minutes · **Difficulty:** Beginner
 
+> Lab design based on a guide by Jhante Charles. Build, documentation and architecture diagram by Krishnadeep Chudasama.
 
+🎥 **WATCH ME COMPLETE THIS LAB HERE:**
+
+*Video walkthrough coming soon.*
+
+<!-- TODO: replace the line above with the Loom link once the video is recorded -->
 
 ## 📋 Table of Contents
 - [Objective](#-objective)
@@ -19,36 +25,20 @@
   - [Phase 3: Deploying the Database Server (The Back End)](#phase-3-deploying-the-database-server-the-back-end)
   - [Phase 4: Validating Connectivity (The Jump)](#phase-4-validating-connectivity-the-jump)
   - [Phase 5: Configuring the Firewall (NSG)](#phase-5-configuring-the-firewall-nsg)
+- [Security Notes](#-security-notes)
 - [Troubleshooting](#-troubleshooting)
 - [Clean Up Resources](#-clean-up-resources)
 
 ---
 
 ## 🎯 Objective
-In this lab, you will build a classic "IaaS" architecture. You will create a Virtual Network with two subnets: a "Public" subnet for a Web Server and a "Private" subnet for a Database Server. You will configure Network Security Groups (NSGs) to ensure the Database Server is protected from the internet and can only be accessed by the Web Server.
+In this lab, you will build a classic "IaaS" architecture. You will create a Virtual Network with two subnets: a "Public" subnet for a Web Server and a "Private" subnet for a Database Server. You will configure Network Security Groups (NSGs) so the Database Server has no exposure to the internet and is reached only through the Web Server.
 
 ## 🏗️ Architecture Diagram
 
-```mermaid
-graph TD
-    Internet((Internet)) -->|HTTP / SSH| WebSubnet
-    
-    subgraph VNet [vnet-lab02 (10.0.0.0/16)]
-        subgraph WebSubnet [Public Subnet: snet-web (10.0.1.0/24)]
-            WebVM[vm-web-01<br/>Public IP Assigned]
-        end
-        
-        subgraph DBSubnet [Private Subnet: snet-db (10.0.2.0/24)]
-            DBVM[vm-db-01<br/>Private IP: 10.0.2.4<br/>No Public IP]
-        end
-    end
+![Lab 02 architecture: internet to vm-web-01 in the public subnet, vm-db-01 in the private subnet with no public IP, NSGs on each VM](images/lab02-architecture.png)
 
-    WebVM -->|Internal Ping / Traffic allowed via NSG| DBVM
-
-    style Internet fill:#f9f,stroke:#333,stroke-width:2px
-    style WebVM fill:#0072C6,stroke:#fff,stroke-width:2px,color:#fff
-    style DBVM fill:#28a745,stroke:#fff,stroke-width:2px,color:#fff
-```
+**How to read it:** The internet reaches only `vm-web-01` (HTTP and SSH). `vm-db-01` has no public IP and is reachable only from the web subnet (`10.0.1.0/24`), so administrators "jump" through the web server to get to it.
 
 ## ✅ Prerequisites
 - [x] Active Azure Subscription
@@ -57,7 +47,7 @@ graph TD
 ## ⚙️ Lab Variables (Naming Convention)
 Use these naming conventions to ensure consistency throughout the deployment:
 * **Resource Group:** `rg-lab02-krish`
-* **VNet Name:** `vnet-lab02`
+* **VNet Name:** `vnet-lab02` (`10.0.0.0/16`)
 * **Subnet 1 (Public):** `snet-web` (`10.0.1.0/24`)
 * **Subnet 2 (Private):** `snet-db` (`10.0.2.0/24`)
 * **Web VM:** `vm-web-01`
@@ -85,7 +75,7 @@ Use these naming conventions to ensure consistency throughout the deployment:
    - **Resource Group:** `rg-lab02-krish`
    - **Virtual machine name:** `vm-web-01`
    - **Region:** East US
-   - **Image:** Ubuntu Server 20.04 LTS
+   - **Image:** Ubuntu Server 22.04 LTS
    - **Size:** Standard_B1s
    - **Authentication type:** SSH public key
    - **Key pair name:** `key-lab02`
@@ -104,7 +94,7 @@ Now we deploy the server that represents our database.
    - **Resource Group:** `rg-lab02-krish`
    - **Virtual machine name:** `vm-db-01`
    - **Region:** East US
-   - **Image:** Ubuntu Server 20.04 LTS
+   - **Image:** Ubuntu Server 22.04 LTS
    - **Size:** Standard_B1s
    - **Key pair name:** Use existing key stored in Azure -> `key-lab02`
    - **Public inbound ports:** Allow selected -> SSH (22).
@@ -132,7 +122,7 @@ Since `vm-db-01` has no public IP, you cannot connect to it directly from your h
    - Press `Ctrl + C` to stop the ping.
 
 ### Phase 5: Configuring the Firewall (NSG)
-Right now, `vm-db-01` is accepting traffic. We want to ensure ONLY the Web Subnet can talk to it.
+Right now, `vm-db-01` is accepting traffic. We want to make the intent explicit: the Web Subnet is allowed to talk to it.
 1. Go to the **Networking** tab of `vm-db-01`.
 2. Click on the attached Network Security Group (e.g., `vm-db-01-nsg`).
 3. Click **Inbound security rules** -> **+ Add**.
@@ -147,7 +137,16 @@ Right now, `vm-db-01` is accepting traffic. We want to ensure ONLY the Web Subne
    - **Priority:** `100`
    - **Name:** `Allow-Web-Subnet`
 5. Click **Add**.
-6. *Note:* Because we configured no Public IP on this VM, general internet traffic is already blocked, and this rule explicitly regulates internal subnet communication.
+6. *Note:* Because we configured no Public IP on this VM, general internet traffic cannot reach it. This rule documents the intended path from the web subnet, but see the Security Notes below: Azure's default rules already allow traffic between subnets in the same VNet.
+
+---
+
+## 🔐 Security Notes
+Things worth knowing before you treat this setup as production-ready:
+
+- **Default NSG rules still apply.** Every NSG includes `AllowVnetInBound` (priority 65000), which allows all traffic between resources in the same VNet. That is why the ping in Phase 4 works before the Phase 5 rule exists. To truly restrict the database to the web subnet, keep the allow rule at priority `100` and add a deny rule with a priority number lower than `65000` (for example `200`, source `VirtualNetwork`, action `Deny`).
+- **SSH on the web server is open to the internet.** Selecting "Allow selected ports -> SSH (22)" opens port 22 to any source. For anything beyond a lab, restrict the source to your own IP, or use Azure Bastion so port 22 is not exposed at all.
+- **Scope the database rule.** Replace the `*` destination port range with the actual database port (`3306` for MySQL, `5432` for PostgreSQL).
 
 ---
 
@@ -156,6 +155,8 @@ Right now, `vm-db-01` is accepting traffic. We want to ensure ONLY the Web Subne
   - **Fix:** Check if you deployed `vm-db-01` into the correct subnet (`snet-db`). Verify that both VMs reside within the same VNet (`vnet-lab02`).
 - **Issue:** "I can't SSH into `vm-db-01` directly."
   - **Reason:** You cannot SSH directly from your local computer because there is no Public IP assigned. You must SSH into `vm-web-01` first as a jump box.
+- **Issue:** `ping: usage error: Destination address required`
+  - **Fix:** Put the IP on the same line as the command: `ping 10.0.2.4`.
 
 ---
 
